@@ -4,7 +4,7 @@
 # # Init
 # ## Import Libraries
 
-import argparse # will use, but not yet
+import argparse
 import regex # may or may not use
 from datetime import date # will use, but not yet
 import subprocess
@@ -25,15 +25,26 @@ import subprocess
 
 # default: proportional
 user_args = "P"
-#TODO user_args = argparse()
-print(f"User arguments: {user_args}")
+parser = argparse.ArgumentParser(description="Process some mutually exclusive flags.")
+group = parser.add_mutually_exclusive_group(required=True)
+
+group.add_argument("-P", action="store_true", help="Enable option P")
+group.add_argument("-S", action="store_true", help="Enable option S")
+group.add_argument("-V", action="store_true", help="Enable option V")
+
+args = parser.parse_args()
+if args.P:
+    print("Proportional option is enabled.")
+elif args.S:
+    print("Classical Solesmes option is enabled.")
+elif args.V:
+    print("Vatican Edition option is enabled.")
 
 # ## Define LilyPond Template
 # LilyPond Emmentaler Font Reference:
 # https://lilypond.org/doc/v2.24/Documentation/notation/the-emmentaler-font#vaticana-glyphs
 
-ly_template = 
-r"""
+ly_template = r"""
 \version "2.24.4"
 
 \header {
@@ -283,14 +294,18 @@ et ip -- se sit vo -- bís -- cum,
 """
 # [Score](tests/in--deus_israel--proportional-modern.pdf)
 # ##### Proportionalist Parsing Function
+if args.P:
+    def parse_syllable_melody(syllable_melody):
+        ly_syllable_melody = ""
+        return ly_syllable_melody
 
-def parse_gabc_syllable_melody_proportional(gabc_syllable_melody):
-    return 0
-
-
-# ## Classical Solesmes
+# #### Classical Solesmes
+elif args.S:
+    print("Classical Solesmes not currently supported")
 # #### Vatican Edition
 # - Rather than symbols attached to nuemes, this one will look for barlines and spacing indicating morae vocis.
+elif args.V:
+    print("Vatican Edition not currently supported")
 # ### Body Parser
 
 for i, c in enumerate(gabc_body):
@@ -305,35 +320,19 @@ for i, c in enumerate(gabc_body):
                 i += 4
             else:
                 print("clef not defined")
-                return 0
 
     elif c == "(":
         syllable_melody = ""
         while c is not ")":
             syllable_melody += c
             i += 1
-        match user_args:
-            case "P":
-                parse_gabc_syllable_melody_proportional(syllable_melody)
-            case "S":
-                print("Solesmes not yet supported.")
-                return 0
-            case "V":
-                print("Vatican not yet supported.")
-                return 0
         
+        ly_melody += parse_syllable_melody(syllable_melody)
 
     if gabc_body[i+1] == " ":
         ly_lyrics += " "
     else:
         ly_lyrics += " -- "
-
-    parsing_mode = "lyrics"
-    break
-
-    elif parsing_mode == "lyrics":
-        ly_lyrics += c
-
 
 # # Output
 # - import data, interpolate from template, and return
@@ -345,8 +344,8 @@ ly_template_interpolated = ly_template
 ly_template_interpolated = ly_template_interpolated.replace("% ly_metadeta", ''.join(ly_metadata))
 ly_template_interpolated = ly_template_interpolated.replace("% ly_melody", ly_melody)
 ly_template_interpolated = ly_template_interpolated.replace("% ly_lyrics", ly_lyrics)
-ly_template_interpolated = ly_template_interpolated.replace("% annotation", f"instrumentName = {ly_metadata[\"annotation\"]}")
-ly_template_interpolated = ly_template_interpolated.replace("%DATE", date.
+#ly_template_interpolated = ly_template_interpolated.replace("% annotation", f"instrumentName = {ly_metadata[\"annotation\"]}")
+#ly_template_interpolated = ly_template_interpolated.replace("%DATE", date.
 
 with open("chant.ly", "w") as file:
     file.write(ly_template_interpolated)
