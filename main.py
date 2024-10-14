@@ -1,3 +1,5 @@
+# - [ ] add file path to argparser
+
 #!/usr/bin/env python
 # coding: utf-8
 
@@ -34,11 +36,15 @@ group.add_argument("-V", action="store_true", help="Enable option V")
 
 args = parser.parse_args()
 if args.P:
-    print("Proportional option is enabled.")
+    print("Proportional option is enabled.\n")
+"""
 elif args.S:
-    print("Classical Solesmes option is enabled.")
+    print("Classical Solesmes option is enabled.\n")
 elif args.V:
-    print("Vatican Edition option is enabled.")
+    print("Vatican Edition option is enabled.\n")
+else:
+    print("Proportional option is enabled. (default)")
+"""
 
 # ## Define LilyPond Template
 # LilyPond Emmentaler Font Reference:
@@ -142,6 +148,9 @@ text = \lyricmode {
 }
 % score generated from https://github.com/AlexHarter/GregoLy on <%DATE>
 """
+# export template
+with open("template.ly", "w") as file:
+    file.write(ly_template)
 
 # ## Import and Split GABC
 
@@ -263,8 +272,26 @@ def gabc_position_to_ly_pitch_class(clef, gabc_position):
 example_clef = "c4"
 example_gabc_position = "i"
 example_output = gabc_position_to_ly_pitch_class(example_clef, example_gabc_position)
-
 print(example_output)
+
+# classes
+class LyNote:
+    durations = ("1", "2", "4", "4.", "8", "16")
+    octaves = (3, 4, 5)
+    special_nuemes = ("none", "oriscus", "quilisma", "initio_debilis")
+    liquescence = ("none", "diminutive", "augmentative_ascending", "augmenetative_descending")
+
+    def __init__(self, pitch_class, octave=4, duration="8", special_nueme="none", liquescence="none", first_in_syllable=False, last_in_syllable=False):
+        self.pitch_class = pitch_class
+        self.octave = octave
+        self.duration = duration
+        self.special_nueme = special_nueme
+        self.liquescence = liquescence
+        self.first_in_syllable = first_in_syllable
+        self.last_in_syllable = last_in_syllable
+
+    def __str__(self):
+        return f"{pitch_class}{duration}"
 
 # ### Define Rhythm Interpretation-Specific Functions
 # - I choose a separate function for the melody within the syllable because it is guaranteed to be self-contained, apart from the clef.
@@ -294,20 +321,16 @@ et ip -- se sit vo -- bís -- cum,
 """
 # [Score](tests/in--deus_israel--proportional-modern.pdf)
 # ##### Proportionalist Parsing Function
-if args.P:
-    def parse_syllable_melody(syllable_melody):
-        ly_syllable_melody = ""
-        return ly_syllable_melody
 
 # #### Classical Solesmes
-elif args.S:
+if args.S:
     print("Classical Solesmes not currently supported")
 # #### Vatican Edition
 # - Rather than symbols attached to nuemes, this one will look for barlines and spacing indicating morae vocis.
-elif args.V:
+if args.V:
     print("Vatican Edition not currently supported")
 # ### Body Parser
-
+"""
 for i, c in enumerate(gabc_body):
     gabc_body = gabc_body.strip()
 
@@ -323,7 +346,7 @@ for i, c in enumerate(gabc_body):
 
     elif c == "(":
         syllable_melody = ""
-        while c is not ")":
+        while c != ")":
             syllable_melody += c
             i += 1
         
@@ -333,6 +356,9 @@ for i, c in enumerate(gabc_body):
         ly_lyrics += " "
     else:
         ly_lyrics += " -- "
+"""
+ly_lyrics = ""
+ly_melody = ""
 
 # # Output
 # - import data, interpolate from template, and return
@@ -352,6 +378,5 @@ with open("chant.ly", "w") as file:
 
 
 # ## Compile .ly file using lilypond cli
-
-#subprocess.run(['lilypond' 'output.ly'])
+#subprocess.run(['lilypond' 'chant.ly'])
 
