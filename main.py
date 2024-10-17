@@ -1,14 +1,12 @@
-# - [ ] add file path to argparser
-
 #!/usr/bin/env python
 # coding: utf-8
 
 # # Init
 # ## Import Libraries
-
+print("Importing modules..")
 import argparse
-import regex # may or may not use
-from datetime import date # will use, but not yet
+#import regex # may or may not use
+from datetime import datetime
 import subprocess
 
 # ## Take in user arguments
@@ -25,28 +23,41 @@ import subprocess
 #   - presence of custodes (default: yes)
 #   - staff color (default: dark red)
 
-# default: proportional
-user_args = "P"
-parser = argparse.ArgumentParser(description="Process some mutually exclusive flags.")
-group = parser.add_mutually_exclusive_group(required=True)
 
-group.add_argument("-P", action="store_true", help="Enable option P")
-group.add_argument("-S", action="store_true", help="Enable option S")
-group.add_argument("-V", action="store_true", help="Enable option V")
+print("Processing user arguments...")
+parser = argparse.ArgumentParser(description="Process some mutually exclusive flags.")
+group = parser.add_mutually_exclusive_group(required=False)
+
+group.add_argument("-P", "--proportional", action="store_true", help="Enable option P")
+group.add_argument("-S", "--solesmes", action="store_true", help="Enable option S")
+group.add_argument("-V", "--vatican", action="store_true", help="Enable option V")
+
+# Add an argument for the file path
+parser.add_argument("-f", "--file", type=str, help="Path to the input file")
 
 args = parser.parse_args()
-if args.P:
+
+# If neither S nor V is set, set P to True by default
+if not (args.solesmes or args.vatican):
+    args.proportional = True
+
+if args.proportional:
     print("Proportional option is enabled.\n")
-"""
-elif args.S:
+elif args.solesmes:
     print("Classical Solesmes option is enabled.\n")
-elif args.V:
+elif args.vatican:
     print("Vatican Edition option is enabled.\n")
 else:
     print("Proportional option is enabled. (default)")
-"""
 
-# ## Define LilyPond Template
+# Handle the file path argument
+if args.file:
+    print(f"Using input file: {args.file}")
+else:
+    print("No input file specified.")
+
+# ## Define LilyPond Template # is this even necessary? Well, maybe if I want to customize macros...
+print("Defining LilyPond template...") 
 # LilyPond Emmentaler Font Reference:
 # https://lilypond.org/doc/v2.24/Documentation/notation/the-emmentaler-font#vaticana-glyphs
 
@@ -54,7 +65,7 @@ ly_template = r"""
 \version "2.24.4"
 
 \header {
-  %ly_metadata
+%ly_metadata
 }
 
 oriscus = {
@@ -117,15 +128,11 @@ global = {
 melody = \transpose c c \relative c'' {
   \global
 
-  %test ly_melody
-  g8( c) c[ c] c4
-  %end test
+  %ly_melody
 }
 
 text = \lyricmode {
-  %test ly_lyrics
-  De --- us
-  %end test
+  %ly_lyrics
 }
 
 \score {
@@ -138,9 +145,7 @@ text = \lyricmode {
   \layout {
     \context {
       \Staff
-      %test annotation
-
-      %end test
+      %annotation
       \consists Custos_engraver
       \override Custos.style = #'medicaea
     }
@@ -153,21 +158,21 @@ with open("template.ly", "w") as file:
     file.write(ly_template)
 
 # ## Import and Split GABC
-
-gabc_file_path = "tests/in--deus_israel--proportional.gabc" # example
-with open(gabc_file_path, 'r') as file:
+print("Importing and splitting .gabc file...")
+with open(args.file, 'r') as file:
     gabc = file.read()
 
-print(f"Full GABC:\n{gabc}")
+#print(f"Full GABC:\n{gabc}")
 
 gabc_header = gabc.split("%%")[0]
 gabc_body = gabc.split("%%")[1]
 
-print(f"GABC Header:\n{gabc_header}")
-print(f"GABC Body:\n{gabc_body}")
+#print(f"GABC Header:\n{gabc_header}")
+#print(f"GABC Body:\n{gabc_body}")
 
 
 # # Parse Data
+print("Parsing data...")
 # ## Parse Header
 # ### Example Input/Output
 # #### Example Input
@@ -193,9 +198,11 @@ commentary = "Tob. 7:15 & 8:19, Ps. 127:1"
 annotation = "IN. III"
 """
 # ### Header Parser
-
-#TODO remove semicolon from last entry
-gabc_header_entries = gabc_header.strip().split(";\n")
+print("Parsing header...")
+gabc_header = gabc_header.strip()
+if gabc_header[-1] == ";":
+    gabc_header = gabc_header[:-1]
+gabc_header_entries = gabc_header.split(";\n")
 gabc_header_dictionary = {}
 for entry in gabc_header_entries:
     #print(entry) # testing
@@ -207,9 +214,9 @@ ly_metadata = []
 if "name" in gabc_header_dictionary:
     gabc_header_dictionary["title"] = gabc_header_dictionary.pop("name")
 for key, value in gabc_header_dictionary.items():
-    ly_metadata.append(f"{key} = \"{value}\"")
+    ly_metadata.append(f"  {key} = \"{value}\"\n")
 # test
-print(f"LilyPond Metadata:\n{ly_metadata}")
+#print(f"LilyPond Metadata:\n{ly_metadata}")
 
 
 # ## Parse Body
@@ -267,13 +274,15 @@ def gabc_position_to_ly_pitch_class(clef, gabc_position):
     distance_from_do = gabc_positions_with_position_ints[gabc_position] - clefs_with_position_int_of_do[clef]
     ly_pitch_class = distance_from_do_with_ly_pitch_classes[distance_from_do]
     return ly_pitch_class
+#TODO move to LyNote class?
 
-# test
+# test gabc_position_to_ly_pitch_class()
+"""
 example_clef = "c4"
 example_gabc_position = "i"
 example_output = gabc_position_to_ly_pitch_class(example_clef, example_gabc_position)
 print(example_output)
-
+"""
 # classes
 class LyNote:
     durations = ("1", "2", "4", "4.", "8", "16")
@@ -321,62 +330,59 @@ et ip -- se sit vo -- bís -- cum,
 """
 # [Score](tests/in--deus_israel--proportional-modern.pdf)
 # ##### Proportionalist Parsing Function
-
+ly_melody = []
+"""
+for i, c in enumerate(gabc_body):
+    if c in gabc_positions:
+        note = LyNote(ly_pitch_class=gabc_position_to_ly_pitch_class(c))
+        ly_melody.append(note)
+"""
 # #### Classical Solesmes
-if args.S:
+if args.solesmes:
     print("Classical Solesmes not currently supported")
 # #### Vatican Edition
 # - Rather than symbols attached to nuemes, this one will look for barlines and spacing indicating morae vocis.
-if args.V:
+if args.vatican:
     print("Vatican Edition not currently supported")
 # ### Body Parser
-"""
-for i, c in enumerate(gabc_body):
-    gabc_body = gabc_body.strip()
-
-    # we expect the clef to be defined first
-    if i == 0:
-        if c == "(":
-
-            if gabc_body[i+1:i+3] in clefs and gabc_body[i+3] == ")":
-                clef = gabc_body[i+1:i+3]
-                i += 4
-            else:
-                print("clef not defined")
-
-    elif c == "(":
-        syllable_melody = ""
-        while c != ")":
-            syllable_melody += c
-            i += 1
-        
-        ly_melody += parse_syllable_melody(syllable_melody)
-
-    if gabc_body[i+1] == " ":
-        ly_lyrics += " "
-    else:
-        ly_lyrics += " -- "
-"""
+print("Parsing body...")
+# #### Lyrics Parser
+print("Parsing lyrics...")
 ly_lyrics = ""
-ly_melody = ""
+parsing_lyrics = False
+first_syllable = True
+for i, c in enumerate(gabc_body):
+    if c == ")":
+        parsing_lyrics = True
+        if i < len(gabc_body) - 1:
+            if gabc_body[i+1] != " ":
+                ly_lyrics += " -- "
+    elif c == "(":
+        parsing_lyrics = False
+    elif parsing_lyrics == True:
+        ly_lyrics += c
+ly_lyrics.strip()
+#print(ly_lyrics)
+# #### Melody Parser
+print("Parsing melody...")
+ly_melody = "(LilyPond Melody)"
 
 # # Output
 # - import data, interpolate from template, and return
 
-with open("template.ly", "r") as file:
-    ly_template = file.read()
-
 ly_template_interpolated = ly_template
-ly_template_interpolated = ly_template_interpolated.replace("% ly_metadeta", ''.join(ly_metadata))
-ly_template_interpolated = ly_template_interpolated.replace("% ly_melody", ly_melody)
-ly_template_interpolated = ly_template_interpolated.replace("% ly_lyrics", ly_lyrics)
-#ly_template_interpolated = ly_template_interpolated.replace("% annotation", f"instrumentName = {ly_metadata[\"annotation\"]}")
-#ly_template_interpolated = ly_template_interpolated.replace("%DATE", date.
+ly_template_interpolated = ly_template_interpolated.replace("%ly_metadata", ''.join(ly_metadata))
+ly_template_interpolated = ly_template_interpolated.replace("%ly_melody", ly_melody)
+ly_template_interpolated = ly_template_interpolated.replace("%ly_lyrics", ly_lyrics)
+ly_template_interpolated = ly_template_interpolated.replace(
+    "%annotation", 
+    f"instrumentName = {gabc_header_dictionary['annotation']}")
+date = datetime.now().strftime("%Y-%m-%d")
+ly_template_interpolated = ly_template_interpolated.replace("%DATE", date)
 
 with open("chant.ly", "w") as file:
     file.write(ly_template_interpolated)
-
-
+print(ly_template_interpolated)
 # ## Compile .ly file using lilypond cli
 #subprocess.run(['lilypond' 'chant.ly'])
 
