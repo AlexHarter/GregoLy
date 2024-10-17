@@ -5,7 +5,7 @@
 # ## Import Libraries
 print("Importing modules..")
 import argparse
-#import regex # may or may not use
+import re
 from datetime import datetime
 import subprocess
 
@@ -298,7 +298,9 @@ class LyNote:
         self.liquescence = liquescence
         self.first_in_syllable = first_in_syllable
         self.last_in_syllable = last_in_syllable
-
+    
+    # this function is kept simple because the complex formatting will be
+    # specific to context
     def __str__(self):
         return f"{pitch_class}{duration}"
 
@@ -314,7 +316,6 @@ r"""
 con(gh~)jún(hjij)gat(ih~) vos,(h_) (;)
 et(g_) i(h_)pse(g_) sit(gfh_) vo(h_)bís(h_0!iwji.__H~rG~rhv_)cum,(hg.__) (;)
 """
-# [Score](tests/in--deus_israel--proportional-gregorian.pdf)
 
 # ###### Desired Melody Output
 r"""
@@ -328,15 +329,7 @@ DE -- us Is -- ra -- \markup {"el" *}
 con -- jún -- gat vos,
 et ip -- se sit vo -- bís -- cum,
 """
-# [Score](tests/in--deus_israel--proportional-modern.pdf)
 # ##### Proportionalist Parsing Function
-ly_melody = []
-"""
-for i, c in enumerate(gabc_body):
-    if c in gabc_positions:
-        note = LyNote(ly_pitch_class=gabc_position_to_ly_pitch_class(c))
-        ly_melody.append(note)
-"""
 # #### Classical Solesmes
 if args.solesmes:
     print("Classical Solesmes not currently supported")
@@ -348,6 +341,7 @@ if args.vatican:
 print("Parsing body...")
 # #### Lyrics Parser
 print("Parsing lyrics...")
+# extract lyrics
 ly_lyrics = ""
 parsing_lyrics = False
 first_syllable = True
@@ -361,8 +355,15 @@ for i, c in enumerate(gabc_body):
         parsing_lyrics = False
     elif parsing_lyrics == True:
         ly_lyrics += c
-ly_lyrics.strip()
-#print(ly_lyrics)
+ly_lyrics = ly_lyrics.strip()
+
+# format lyrics
+## intonation/asterisk
+match = re.search(r'(\w+)\s*\*', ly_lyrics)
+if match:
+    last_syllable = match.group(1)
+    ly_lyrics = re.sub(r'(\w+)\s\*', fr'\\markup {{"{last_syllable}" *}}', ly_lyrics)
+
 # #### Melody Parser
 print("Parsing melody...")
 ly_melody = "(LilyPond Melody)"
