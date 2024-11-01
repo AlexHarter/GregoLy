@@ -76,7 +76,7 @@ melody = \transpose c c \relative c'' {
 }
 
 text = \lyricmode {
-   DE -- us Is -- ra -- el * con -- jún -- gat vos,  et i -- pse sit vo -- bís -- cum,  qui mi -- sér -- tus est  du -- ó -- bus ú -- ni -- cis:  et nunc, Dó -- mi -- ne,  fac e -- os plé -- ni -- us  be -- ne -- dí -- ce -- re te. <i>T. P.</i> Al -- le -- lú -- ia.  al -- le -- lú -- ia.  <i>Ps.</i> Be -- á -- ti o -- mnes qui ti -- ment Dó -- mi -- num : * qui ám -- bu -- lant in vi -- is e -- jus.  Gló -- ri -- a Pa -- tri...  Spi -- rí -- tu -- i San -- cto...  Et nunc, et sem -- per...  E u o u a e. 
+  DE -- us Is -- ra -- \markup {"el" *} con -- jún -- gat vos,  et i -- pse sit vo -- bís -- cum,  qui mi -- sér -- tus est  du -- ó -- bus ú -- ni -- cis:  et nunc, Dó -- mi -- ne,  fac e -- os plé -- ni -- us  be -- ne -- dí -- ce -- re te. <i>T. P.</i> Al -- le -- lú -- ia.  al -- le -- lú -- ia.  <i>Ps.</i> Be -- á -- ti o -- mnes qui ti -- ment Dó -- mi -- num : * qui ám -- bu -- lant in vi -- is e -- jus.  Gló -- ri -- a Pa -- tri...  Spi -- rí -- tu -- i San -- cto...  Et nunc, et sem -- per...  E u o u a e.
 }
 
 \score {
@@ -95,4 +95,4 @@ text = \lyricmode {
     }
   }
 }
-% score generated from https://github.com/AlexHarter/GregoLy on <2024-10-16>
+% score generated from https://github.com/AlexHarter/GregoLy on <2024-10-17>

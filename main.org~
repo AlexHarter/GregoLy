@@ -1,11 +1,43 @@
+"""
+Dad's comments <2024-10-18>:
+- split this file up
+  - unit testing
+    - can help decide how to split 
+    - start with basic cases, then more complicated
+      - accept that refactoring will be necessary
+  - try to keep one file to one purpose
+  - let main.py give a high-level overview that show what's happening, but not how
+- don't be afraid to define a function, even if I call it once, for the sake of readability
+  - one job, one function
+- separate the template into its own file
+  - even if I need to change the defaults
+- although defining a parsing grammar is an option, it probably doesn't make sense at this point
+"""
 #!/usr/bin/env python
 # coding: utf-8
 
+# # Init
+# ## Import Libraries
 print("Importing modules..")
 import argparse
 import re
 from datetime import datetime
 import subprocess
+
+# ## Take in user arguments
+# - /path/to/file.gabc
+# - in which rhythmic system to interpret
+#   - "P" *P*roportional
+#   - "S" Classical *S*olesmes
+#   - "V" *V*atican 
+# - key (default: as close to C4-C5 as possible, within two accidentals)
+# - interpretive options
+#   - presence of special neumes (default: yes to all)
+#   - explicit notation of special neumes (default: neume noteheads)
+# - aesthetic options
+#   - presence of custodes (default: yes)
+#   - staff color (default: dark red)
+
 
 print("Processing user arguments...")
 parser = argparse.ArgumentParser(description="Process some mutually exclusive flags.")
@@ -39,6 +71,108 @@ if args.file:
 else:
     print("No input file specified.")
 
+# ## Define LilyPond Template # is this even necessary? Well, maybe if I want to customize macros...
+print("Defining LilyPond template...") 
+# LilyPond Emmentaler Font Reference:
+# https://lilypond.org/doc/v2.24/Documentation/notation/the-emmentaler-font#vaticana-glyphs
+
+ly_template = r"""
+\version "2.24.4"
+
+\header {
+%ly_metadata
+}
+
+oriscus = {
+  \once \override NoteHead.stencil = #ly:text-interface::print
+  \once \override NoteHead.text = \markup \musicglyph "noteheads.ssolesmes.oriscus"
+  \once \set fontSize = 3
+}
+
+quilisma = {
+  \once \override NoteHead.stencil = #ly:text-interface::print
+  \once \override NoteHead.text = \markup \musicglyph "noteheads.svaticana.quilisma"
+  \once \set fontSize = 3
+  \once \override Stem.transparent = ##t
+}
+
+initioDebilis = {
+  \once \set fontSize = -3
+  \once \override Stem.transparent = ##t
+}
+
+liquescentDiminutive = {
+  \once \set fontSize = -3
+}
+
+liquescentAugmentativeAscending = {
+  \once \override NoteHead.stencil = #ly:text-interface::print
+  \once \override NoteHead.text = \markup \musicglyph "noteheads.ssolesmes.auct.asc"
+  \once \set fontSize = 3
+}
+
+liquescentAugmentativeDescending = {
+  \once \override NoteHead.stencil = #ly:text-interface::print
+  \once \override NoteHead.text = \markup \musicglyph "noteheads.ssolesmes.auct.desc"
+  \once \set fontSize = 3
+}
+
+quarterBar = {
+  \bar ","
+}
+
+halfBar = {
+  \bar ";"
+}
+
+fullBar = {
+  \bar "|"
+}
+
+doubleBar = {
+  \finalis
+}
+
+global = {
+  \key c \major
+  \candenzaOn
+  \omit Staff.TimeSignature
+  \override Staff.StaffSymbol.color = #darkred
+}
+
+melody = \transpose c c \relative c'' {
+  \global
+
+  %ly_melody
+}
+
+text = \lyricmode {
+  %ly_lyrics
+}
+
+\score {
+  <<
+  \new Staff {
+    \context Voice = "vocal" { \melody }
+  }
+  \new Lyrics \lyricsto "vocal" \text
+  >>
+  \layout {
+    \context {
+      \Staff
+      %annotation
+      \consists Custos_engraver
+      \override Custos.style = #'medicaea
+    }
+  }
+}
+% score generated from https://github.com/AlexHarter/GregoLy on <%DATE>
+"""
+# export template
+with open("template.ly", "w") as file:
+    file.write(ly_template)
+
+# ## Import and Split GABC
 print("Importing and splitting .gabc file...")
 with open(args.file, 'r') as file:
     gabc = file.read()
@@ -51,8 +185,34 @@ gabc_body = gabc.split("%%")[1]
 #print(f"GABC Header:\n{gabc_header}")
 #print(f"GABC Body:\n{gabc_body}")
 
-print("Parsing data...")
 
+# # Parse Data
+print("Parsing data...")
+# ## Parse Header
+# ### Example Input/Output
+# #### Example Input
+"""
+name:Deus Israel;
+office-part:Introitus;
+mode:3;
+user-notes: LU 1
+288;
+transcriber:Andrew Hinkley & Patrick Williams;
+commentary: Tob. 7:15 & 8:19, Ps. 127:1;
+annotation: IN. III;
+"""
+# #### Desired Output
+# - sometimes, LilyPond has a different keyword, e.g. "title" instead of gabc's "name"
+"""
+title = "Deus Israel"
+office-part = "Introitus"
+mode = 3
+user-notes = "LU 1288"
+transcriber = "Andrew Hinkley & Patrick Williams"
+commentary = "Tob. 7:15 & 8:19, Ps. 127:1"
+annotation = "IN. III"
+"""
+# ### Header Parser
 print("Parsing header...")
 gabc_header = gabc_header.strip()
 if gabc_header[-1] == ";":
@@ -72,6 +232,11 @@ for key, value in gabc_header_dictionary.items():
     ly_metadata.append(f"  {key} = \"{value}\"\n")
 # test
 #print(f"LilyPond Metadata:\n{ly_metadata}")
+
+
+# ## Parse Body
+# ### Define Pitch Datasets and Functions
+# - Not affected by school of rhythmic interpretation
 
 # datasets
 gabc_positions_with_position_ints = {
@@ -154,14 +319,42 @@ class LyNote:
     def __str__(self):
         return f"{pitch_class}{duration}"
 
+# ### Define Rhythm Interpretation-Specific Functions
+# - I choose a separate function for the melody within the syllable because it is guaranteed to be self-contained, apart from the clef.
+#   - This helps with slurs, beaming, and alterations.
+# - What are the rules for accidentals? I think that they last for the word, so that will have to be handled outside of this function
+# #### Proportionalist
+# ##### Example Input/Output
+# ###### Example Input
+r"""
+(c4) DE(gj)us(jjj_) Is(h_)ra(h_0!iWj_//kjjo_)el(ji__) *(,)
+con(gh~)jún(hjij)gat(ih~) vos,(h_) (;)
+et(g_) i(h_)pse(g_) sit(gfh_) vo(h_)bís(h_0!iwji.__H~rG~rhv_)cum,(hg.__) (;)
+"""
+
+# ###### Desired Melody Output
+r"""
+g8([ c]) c([ c] c4) a a( \quilisma b16 c4 d8[ c] \oriscus c4) c( b) \bar "'"
+g8([ \liquescentDiminutive a]) a([ c b c]) b([ \liquescentDiminutive a]) a4 \bar "," \break
+g4 a g g8([ f] a4) a a( \quilisma b16 c4 b4. a16[ g] a4) a( g2) \bar ","
+"""
+# ###### Desired Lyrics Output
+r"""
+DE -- us Is -- ra -- \markup {"el" *}
+con -- jún -- gat vos,
+et ip -- se sit vo -- bís -- cum,
+"""
+# ##### Proportionalist Parsing Function
+# #### Classical Solesmes
 if args.solesmes:
     print("Classical Solesmes not currently supported")
-
+# #### Vatican Edition
+# - Rather than symbols attached to nuemes, this one will look for barlines and spacing indicating morae vocis.
 if args.vatican:
     print("Vatican Edition not currently supported")
-
+# ### Body Parser
 print("Parsing body...")
-
+# #### Lyrics Parser
 print("Parsing lyrics...")
 # extract lyrics
 ly_lyrics = ""
@@ -186,8 +379,12 @@ if match:
     last_syllable = match.group(1)
     ly_lyrics = re.sub(r'(\w+)\s\*', fr'\\markup {{"{last_syllable}" *}}', ly_lyrics)
 
+# #### Melody Parser
 print("Parsing melody...")
 ly_melody = "(LilyPond Melody)"
+
+# # Output
+# - import data, interpolate from template, and return
 
 ly_template_interpolated = ly_template
 ly_template_interpolated = ly_template_interpolated.replace("%ly_metadata", ''.join(ly_metadata))
@@ -202,5 +399,6 @@ ly_template_interpolated = ly_template_interpolated.replace("%DATE", date)
 with open("chant.ly", "w") as file:
     file.write(ly_template_interpolated)
 print(ly_template_interpolated)
+# ## Compile .ly file using lilypond cli
+#subprocess.run(['lilypond' 'chant.ly'])
 
-subprocess.run(['lilypond' 'chant.ly'])
