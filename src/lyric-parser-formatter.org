@@ -1,2 +1,0 @@
-#+TITLE: GregoLy Lyrics Parser & Formatter
-#+PROPERTY: header-arg :tangle lyrics-parser-formatter.py

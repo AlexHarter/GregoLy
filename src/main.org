@@ -1,3 +1,0 @@
-#+TITLE: GregoLy main.py
-#+PROPERTY: header-args :tangle main.py
-#+BEGIN_

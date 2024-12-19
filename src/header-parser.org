@@ -1,2 +1,0 @@
-#+TITLE: GregoLy Header Parser
-#+PROPERTY: header-args :tangle header-parser.py
