@@ -1,0 +1,16 @@
+#+TITLE:
+* tests.py
+#+PROPERTY: header-args :tangle tests.py
+#+BEGIN_SRC python
+  import unittest
+#+END_SRC
+* score.gabc
+#+PROPERTY: header-args :tangle score.gabc
+#+BEGIN_SRC gregorio
+  key: value;
+  key: value;
+  %%
+  bo(abcdefghijklm)dy(mlkjihgfedcba) (::)
+#+END_SRC
+* header.gabc
+* body.gabc

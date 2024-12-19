@@ -1,0 +1,10 @@
+* GregoLy
+Convert gabc files in Gregorian notation to LilyPond files in modern notation and compile.
+
+* Planned Features
+- Export for different rhythmic schools:
+  - Proportional
+    - Based on scores produced by Patrick Williams at [[https://cantatorium.com/proper][Cantatorium]]
+  - Classical Solesmes
+  - Vatican Edition
+- Customize export, e.g. key, size, how to represent special nuemes

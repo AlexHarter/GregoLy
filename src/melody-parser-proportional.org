@@ -1,0 +1,2 @@
+#+TITLE: GregoLy Melody Parser - Proportional
+#+PROPERTY: header-args :tangle melody-parser-proportional.py

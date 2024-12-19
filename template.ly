@@ -1,25 +1,31 @@
 \version "2.24.4"
 
 \header {
-%ly_metadata
+  %ly_metadata
 }
 
 oriscus = {
+  %default_oriscus
   \once \override NoteHead.stencil = #ly:text-interface::print
   \once \override NoteHead.text = \markup \musicglyph "noteheads.ssolesmes.oriscus"
   \once \set fontSize = 3
+  %end
 }
 
 quilisma = {
+  %default_quilisma
   \once \override NoteHead.stencil = #ly:text-interface::print
   \once \override NoteHead.text = \markup \musicglyph "noteheads.svaticana.quilisma"
   \once \set fontSize = 3
   \once \override Stem.transparent = ##t
+  %end
 }
 
 initioDebilis = {
+  %default_initioDebilis
   \once \set fontSize = -3
   \once \override Stem.transparent = ##t
+  %end
 }
 
 liquescentDiminutive = {
