@@ -20,7 +20,7 @@ Python script that converts Gregorian scores to Modern notation
 - [ ] Create web frontent
 
 # Technologies Used
-- [Python 3.13](httos://python.org)
+- [Python 3.13](https://python.org)
 - [Gregorio](https://gregorio-project.github.io)
 - [LilyPond](https://lilypond.org)
 - [Quarto](https://quarto.org)
