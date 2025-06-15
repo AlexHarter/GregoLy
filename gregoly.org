@@ -1,0 +1,11 @@
+#+TITLE: GregoLy
+#+SUBTITLE: Monorepo for working with .gabc files
+
+* parse-gabc.c
+
+* gabc-to-ly
+- takes
+
+* load-duckdb.c
+
+* gregorian-analysis

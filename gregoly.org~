@@ -1,0 +1,8 @@
+#+TITLE: GregoLy
+#+SUBTITLE: Monorepo for working with .gabc files
+
+* parse-gabc
+
+* gabc-to-ly
+
+* analysis
